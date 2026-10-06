@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PromptLens — Local Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="side">
+      <div class="side-brand">
+        <span class="side-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><circle cx="12" cy="11" r="2.4"/><path d="M12 13.4V16"/></svg>
+        </span>
+        <div>
+          <div class="side-name">PromptLens</div>
+          <div class="side-sub">local dashboard</div>
+        </div>
+      </div>
+      <nav class="side-nav">
+        <button class="nav-btn active" data-tab="overview">Overview</button>
+        <button class="nav-btn" data-tab="history">History</button>
+        <button class="nav-btn" data-tab="settings">Settings</button>
+      </nav>
+      <div class="side-foot">
+        <label class="protect-row">
+          <span>Protection</span>
+          <label class="switch"><input type="checkbox" id="enabled" checked /><span class="slider"></span></label>
+        </label>
+        <div class="local-note">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          100% local — data stays on this device
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <!-- OVERVIEW -->
+      <section class="tab active" id="tab-overview">
+        <h1>Overview</h1>
+        <div class="cards">
+          <div class="card"><div class="k" id="o-total">0</div><div class="l">prompts intercepted</div></div>
+          <div class="card"><div class="k green" id="o-masked">0</div><div class="l">PII items masked</div></div>
+          <div class="card"><div class="k red" id="o-leaked">0</div><div class="l">sent unmasked</div></div>
+          <div class="card"><div class="k amber" id="o-cancelled">0</div><div class="l">warnings cancelled</div></div>
+          <div class="card"><div class="k" id="o-rate">—</div><div class="l">protection rate</div></div>
+        </div>
+        <div class="panel">
+          <h2>Last 14 days</h2>
+          <canvas id="o-trend" width="860" height="190"></canvas>
+          <div class="legend">
+            <span><i class="lg lg-green"></i>masked</span>
+            <span><i class="lg lg-red"></i>sent unmasked</span>
+            <span><i class="lg lg-gray"></i>cancelled</span>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Top PII types</h2>
+          <div id="o-types" class="bars"></div>
+        </div>
+        <div class="panel">
+          <h2>Severity mix</h2>
+          <div id="o-sev" class="bars"></div>
+        </div>
+        <div class="panel">
+          <h2>Activity by site</h2>
+          <div id="o-sites" class="bars"></div>
+        </div>
+        <div class="panel">
+          <h2>Recent interceptions</h2>
+          <ul id="o-recent" class="recent"></ul>
+        </div>
+      </section>
+
+      <!-- HISTORY -->
+      <section class="tab" id="tab-history">
+        <div class="hist-head">
+          <h1>History</h1>
+          <input type="search" id="h-search" placeholder="Search masked text…" />
+        </div>
+        <table class="hist">
+          <thead>
+            <tr><th>When</th><th>Site</th><th>Detected</th><th>Severity</th><th>Action</th><th>Preview</th></tr>
+          </thead>
+          <tbody id="h-body"></tbody>
+        </table>
+        <p id="h-empty" class="empty hidden">No events recorded yet.</p>
+        <button class="btn danger" id="h-clear">Clear local history</button>
+      </section>
+
+      <!-- SETTINGS -->
+      <section class="tab" id="tab-settings">
+        <h1>Settings</h1>
+        <div class="panel privacy-panel">
+          <h2>Privacy — 100% local</h2>
+          <p class="hint">
+            PromptLens has <b>no server, no account and no telemetry</b>. Detection, masking and
+            this dashboard all run inside your browser. Every interception log lives only in this
+            browser profile&apos;s local storage and is never transmitted anywhere.
+          </p>
+          <ul class="privacy-list">
+            <li>Detection &amp; masking happen on-device, at send time.</li>
+            <li>Logs are stored in <code>chrome.storage.local</code> — not in any cloud.</li>
+            <li>Removed at any time via <b>Clear local history</b> (History tab) or uninstalling.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h2>Masking style</h2>
+          <p class="hint">How PII is replaced when you choose “Mask &amp; send”.</p>
+          <select id="s-style">
+            <option value="placeholder">Placeholders — sarah@gmail.com → [EMAIL_1]</option>
+            <option value="partial">Partial — sarah@gmail.com → s•••@g•••.com</option>
+            <option value="redact">Redacted — sarah@gmail.com → ████</option>
+          </select>
+        </div>
+        <div class="panel">
+          <h2>Detector playground</h2>
+          <p class="hint">Type sample text to see what PromptLens would flag. Nothing is logged here.</p>
+          <textarea id="s-testbox" rows="4" placeholder="e.g. my email is john@example.com and card 4111 1111 1111 1111"></textarea>
+          <div id="s-testout" class="testout"></div>
+        </div>
+        <div class="panel">
+          <h2>Backup &amp; export</h2>
+          <p class="hint">Export a JSON snapshot for backup or to view it elsewhere — it happens as a file on disk, never over the network.</p>
+          <div class="row wrap">
+            <button class="btn" id="s-export">Export JSON</button>
+            <label class="btn file-btn">Import JSON<input type="file" id="s-import" accept="application/json" hidden /></label>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="lib/pii-engine.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PromptLens Demo — Fake AI Chat</title>
+  <link rel="stylesheet" href="/extension/content.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0c1214; color: #e6f2ef; min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; padding: 40px 16px;
+    }
+    .chat {
+      width: min(680px, 100%); background: #101b1c; border: 1px solid rgba(255,255,255,.09);
+      border-radius: 18px; padding: 22px; margin-top: 18px;
+    }
+    h1 { font-size: 22px; } h1 span { color: #34d399; font-size: 12px; margin-left: 8px; }
+    p.lead { color: #8fa8a0; font-size: 13px; margin-top: 6px; line-height: 1.6; }
+    #log {
+      margin-top: 14px; min-height: 44px; font-size: 12.5px; color: #9db4ad;
+      background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07);
+      border-radius: 10px; padding: 10px 12px; font-family: ui-monospace, Menlo, monospace;
+    }
+    .composer { display: flex; gap: 10px; margin-top: 16px; }
+    #editor {
+      flex: 1; min-height: 92px; resize: vertical; border-radius: 12px;
+      background: #0c1517; color: #e6f2ef; border: 1px solid rgba(255,255,255,.12);
+      padding: 12px 14px; font-size: 14px; outline: none; line-height: 1.5;
+    }
+    #editor:focus { border-color: rgba(52,211,153,.45); }
+    #send {
+      align-self: flex-end; border: none; cursor: pointer;
+      background: linear-gradient(135deg, #10b981, #14b8a6); color: #04150f;
+      font-weight: 700; font-size: 14px; padding: 11px 20px; border-radius: 11px;
+    }
+    .samples { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .samples button {
+      background: rgba(52,211,153,.08); color: #6ee7b7; border: 1px solid rgba(52,211,153,.25);
+      border-radius: 999px; font-size: 12px; padding: 7px 12px; cursor: pointer;
+    }
+    .hint { color:#8fa8a0; font-size:12px; margin-top:10px; }
+  </style>
+</head>
+<body>
+  <h1>PromptLens live demo <span>simulated AI chat</span></h1>
+  <p class="lead">
+    This page loads the extension's real detection engine and interception script.
+    Type something with PII (or click a sample) and hit <b>Send</b> — PromptLens will block the send,
+    warn you, and mask &amp; replace once you accept. Clean prompts pass straight through.
+  </p>
+
+  <div class="chat">
+    <div class="composer">
+      <textarea id="editor" placeholder="Message the AI… e.g. Hi, I'm Sarah, email sarah@gmail.com, card 4111 1111 1111 1111"></textarea>
+      <button id="send" aria-label="Send prompt">Send ⏎</button>
+    </div>
+    <div class="samples">
+      <button onclick="window.fillSample(0)">📧 Email + name + phone</button>
+      <button onclick="window.fillSample(1)">💳 Credit card + API key</button>
+      <button onclick="window.fillSample(2)">🪪 CNIC + DOB + ZIP</button>
+      <button onclick="window.fillSample(3)">✅ Totally clean prompt</button>
+    </div>
+    <p class="hint">Try pressing Enter inside the box, too — both send paths are intercepted.</p>
+    <div id="log">Waiting for a prompt…</div>
+  </div>
+
+  <script src="/extension/lib/pii-engine.js"></script>
+  <script src="/extension/content.js"></script>
+  <script>
+    const editor = document.getElementById('editor')
+    const log = document.getElementById('log')
+    window.fillSample = function (i) {
+      editor.value = [
+        "Hi, I'm Sarah Ahmed, email sarah.ahmed@gmail.com, phone +92 300 1234567. Help me draft a complaint.",
+        'My card 4111 1111 1111 1111 keeps declining and my OpenAI key sk-proj-9x2KpLmNqR4tUv8WxYz12 gives auth errors.',
+        'Update my record: CNIC 42101-1234567-8, DOB: 1994-03-21, zip: 44000.',
+        'Explain the difference between HTTP GET and POST with a short example.'
+      ][i]
+      editor.dispatchEvent(new Event('input', { bubbles: true }))
+      editor.focus()
+    }
+    function doSend() {
+      log.textContent = '→ PROMPT SENT TO AI: ' + (editor.value || '(empty)').slice(0, 140)
+    }
+    document.getElementById('send').addEventListener('click', doSend)
+    editor.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault()
+        document.getElementById('send').click()
+      }
+    })
+  </script>
+</body>
+</html>
